@@ -7,6 +7,7 @@ require (
 	github.com/cockroachdb/pebble v0.0.0-20230406223121-124486b0f85d
 	github.com/joho/godotenv v1.5.1
 	github.com/sashabaranov/go-openai v1.5.7
+	github.com/vmihailenco/msgpack/v5 v5.3.5
 )
 
 require (
@@ -31,6 +32,7 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/exp v0.0.0-20200513190911-00229845015e // indirect
 	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7 // indirect
 	golang.org/x/sys v0.5.0 // indirect

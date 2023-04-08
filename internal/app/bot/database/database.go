@@ -2,10 +2,10 @@ package database
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"path/filepath"
 
 	"github.com/cockroachdb/pebble"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type Database struct {
@@ -34,11 +34,11 @@ func (d *Database) Get(key int64, value any) error {
 		return err
 	}
 	defer closer.Close()
-	return json.Unmarshal(data, value)
+	return msgpack.Unmarshal(data, value)
 }
 
 func (d *Database) Set(key int64, value any) error {
-	bytes, err := json.Marshal(value)
+	bytes, err := msgpack.Marshal(value)
 	if err != nil {
 		return err
 	}
