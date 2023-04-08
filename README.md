@@ -2,13 +2,25 @@
 
 **J**ust **A**nother **R**ather **I**ntelligent **C**hat **Bot** - written in Go and powered by Telegram and OpenAI.
 
+## Setup
+
+1. Install Go 1.20 or higher
+2. Install [`air`](https://github.com/cosmtrek/air) (optional; for development)
+3. Clone this repository: `git clone https://github.com/AaronCQL/jaricbot.git`
+4. Create a `.env` file in the root directory and fill in your Telegram bot API key and OpenAI API key (refer to `.env.example`)
+
+> If you want the bot to reply to messages in groups, you will need to disable [privacy mode](https://core.telegram.org/bots#privacy-mode) via [@BotFather](https://t.me/BotFather).
+
 ## Deploying
 
-1. Create a `.env` file in the root directory (refer to `.env.example`), and fill in the respective values
-2. Start the bot for production using `make start`
+```sh
+# Build the bot and start it
+make start
+```
 
 ## Developing
 
-1. Install [`air`](https://github.com/cosmtrek/air) (used to rerun code automatically on file changes)
-2. Create a `.env` file in the root directory (refer to `.env.example`), and fill in the respective values
-3. Start the bot with automatic code reload using `make dev`
+```sh
+# Run the bot using `air` (auto-restart on file changes)
+make dev
+```
