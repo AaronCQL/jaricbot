@@ -46,6 +46,7 @@ func main() {
 	dispatcher := updater.Dispatcher
 
 	// Add handlers here:
+	dispatcher.AddHandler(handler.NewCommandHandler(ctx))
 	dispatcher.AddHandler(handler.NewTextHandler(ctx, client, model))
 
 	bot, err := gotgbot.NewBot(config.TelegramBotKey, nil)
