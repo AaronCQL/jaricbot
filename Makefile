@@ -4,6 +4,9 @@ build:
 test:
 	go test ./... -v
 
+setup:
+	go run ./cmd/setup/main.go
+
 dev:
 	air
 
