@@ -31,20 +31,23 @@ func (m *Model) StoreMessages(ctx context.Context, msgs []Message) error {
 	return nil
 }
 
-// Returns the message with the given ID and all of its replies.
-func (m *Model) GetMessageAndReplies(ctx context.Context, msgID int64) ([]Message, error) {
+// Returns all replies of the given message.
+func (m *Model) GetReplies(ctx context.Context, msgID int64) ([]Message, error) {
 	msgs := []Message{}
 	id := msgID
 	for i := 0; i < maxLinkedMessages; i++ {
 		msg := Message{}
-		if err := m.db.Get(id, &msg); err != nil {
-			if err == pebble.ErrNotFound {
-				break
-			}
+		err := m.db.Get(id, &msg)
+		if err == pebble.ErrNotFound {
+			break
+		}
+		if err != nil {
 			return nil, err
 		}
 		// prepend replies to the list
-		msgs = append([]Message{msg}, msgs...)
+		if i != 0 {
+			msgs = append([]Message{msg}, msgs...)
+		}
 		if msg.ReplyID == nil {
 			break
 		}

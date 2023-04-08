@@ -21,10 +21,8 @@ const (
 
 	ChatTypePrivate = "private"
 
-	CommandPrefix = "/"
-	CommandStart  = "/start"
-	CommandHelp   = "/help"
-	CommandChat   = "/chat"
+	CommandStart = "/start"
+	CommandHelp  = "/help"
 
 	MessageStart = "Hi, I'm JaricBot! Feel free to chat about anything with me.\n\nI can continue a conversation, but only if you send your message as a reply. If you don't, I'll just assume that you're starting a new topic.\n\nI can also reply you in a group, but you'll need to tag me at the start of your message."
 
@@ -54,7 +52,7 @@ func NewTextHandler(ctx context.Context, client *openai.Client, mod *model.Model
 		// Remove the bot's username from the message
 		senderText = strings.TrimSpace(strings.TrimPrefix(msg.Text, botUsername))
 
-		// Query past messages if user is replying to a message
+		// Handle prompts and replies
 		ccMsgs := []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,
@@ -62,7 +60,9 @@ func NewTextHandler(ctx context.Context, client *openai.Client, mod *model.Model
 			},
 		}
 		if isReply {
-			msgs, err := mod.GetMessageAndReplies(ctx, msg.ReplyToMessage.MessageId)
+			reply := msg.ReplyToMessage
+			// Append all replies of the latest `reply`
+			msgs, err := mod.GetReplies(ctx, reply.MessageId)
 			if err != nil {
 				return fmt.Errorf("failed to get linked messages: %v", err)
 			}
@@ -76,6 +76,15 @@ func NewTextHandler(ctx context.Context, client *openai.Client, mod *model.Model
 					Content: m.Content,
 				})
 			}
+			// Append the latest `reply`
+			role := openai.ChatMessageRoleUser
+			if reply.From.Id == bot.Id {
+				role = openai.ChatMessageRoleAssistant
+			}
+			ccMsgs = append(ccMsgs, openai.ChatCompletionMessage{
+				Role:    role,
+				Content: reply.Text,
+			})
 		}
 		ccMsgs = append(ccMsgs, openai.ChatCompletionMessage{
 			Role:    openai.ChatMessageRoleUser,
