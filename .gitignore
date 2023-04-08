@@ -1,0 +1,10 @@
+# Pebble db data dir
+.pebble
+
+# Built files
+tmp
+bin
+
+# Env vars
+.env*
+!.env.example
