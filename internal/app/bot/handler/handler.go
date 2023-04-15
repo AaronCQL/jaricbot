@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/AaronCQL/jaricbot/internal/app/bot/model"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -32,6 +33,8 @@ const (
 func NewTextHandler(ctx context.Context, client *openai.Client, mod *model.Model) ext.Handler {
 	// TODO: handle edited messages
 	handler := func(bot *gotgbot.Bot, ectx *ext.Context) error {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
 		msg := ectx.EffectiveMessage
 		senderText := msg.Text
 		isReply := msg.ReplyToMessage != nil
@@ -46,8 +49,20 @@ func NewTextHandler(ctx context.Context, client *openai.Client, mod *model.Model
 			return nil
 		}
 
-		// Send typing action
-		go ectx.EffectiveChat.SendAction(bot, ActionTyping, nil)
+		// Send typing action until bot replies
+		go func() {
+			ectx.EffectiveChat.SendAction(bot, ActionTyping, nil)
+			ticker := time.NewTicker(5 * time.Second)
+			for {
+				select {
+				case <-ticker.C:
+					ectx.EffectiveChat.SendAction(bot, ActionTyping, nil)
+				case <-ctx.Done():
+					ticker.Stop()
+					return
+				}
+			}
+		}()
 
 		// Remove the bot's username from the message
 		senderText = strings.TrimSpace(strings.TrimPrefix(msg.Text, botUsername))
