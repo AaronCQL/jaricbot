@@ -63,6 +63,10 @@ func main() {
 				// This timeout must be longer than the polling interval
 				Timeout: time.Second * (time.Duration(pollingInterval) + 1),
 			},
+			AllowedUpdates: []string{
+				gotgbot.UpdateTypeMessage,
+				gotgbot.UpdateTypeEditedMessage,
+			},
 		},
 	})
 	if err != nil {
