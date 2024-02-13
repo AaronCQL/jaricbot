@@ -120,7 +120,12 @@ func NewTextHandler(ctx context.Context, client *openai.Client, mod *model.Model
 		// Reply user with chat response
 		reply, err := msg.Reply(bot,
 			formatTelegramMarkdown(res.Choices[0].Message.Content),
-			&gotgbot.SendMessageOpts{ParseMode: ParseModeMarkdown},
+			&gotgbot.SendMessageOpts{
+				ParseMode: ParseModeMarkdown,
+				ReplyMarkup: &gotgbot.ForceReply{
+					ForceReply: true,
+				},
+			},
 		)
 		if err != nil {
 			return fmt.Errorf("failed to send message: %w", err)

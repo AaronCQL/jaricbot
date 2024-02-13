@@ -6,7 +6,7 @@ require (
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.16
 	github.com/cockroachdb/pebble v0.0.0-20230406223121-124486b0f85d
 	github.com/joho/godotenv v1.5.1
-	github.com/sashabaranov/go-openai v1.5.7
+	github.com/sashabaranov/go-openai v1.19.3
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 )
 
