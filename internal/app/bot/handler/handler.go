@@ -11,7 +11,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
-	"github.com/sashabaranov/go-openai"
+	"github.com/google/generative-ai-go/genai"
 )
 
 const (
@@ -25,12 +25,12 @@ const (
 	CommandStart = "/start"
 	CommandHelp  = "/help"
 
-	MessageStart = "Hi, I'm JaricBot! Feel free to chat about anything with me.\n\nI can continue a conversation, but only if you send your message as a reply. If you don't, I'll just assume that you're starting a new topic.\n\nI can also reply you in a group, but you'll need to tag me at the start of your message."
+	MessageStart = "Hi, I'm JaricBot! Feel free to chat about anything with me.\n\nI can continue a conversation, but only if you send your message as a reply. If you don't, I'll just assume that you're starting a new topic.\n\nIf you want me to reply you in a group, tag me at the start of your message."
 
-	PromptJaric = "Your name is 'JaricBot', an acronym which stands for 'Just Another Rather Intelligent Chat Bot'."
+	PromptJaric = "Your name is 'JaricBot', an acronym which stands for 'Just Another Rather Intelligent Chat Bot'. You are a Telegram bot and can only send text messages. If a user wants to continue the conversation with you, the user must reply to the message that they want to continue from."
 )
 
-func NewTextHandler(ctx context.Context, client *openai.Client, mod *model.Model) ext.Handler {
+func NewTextHandler(ctx context.Context, gen *genai.GenerativeModel, mod *model.Model) ext.Handler {
 	// TODO: handle edited messages
 	handler := func(bot *gotgbot.Bot, ectx *ext.Context) error {
 		ctx, cancel := context.WithCancel(ctx)
@@ -68,63 +68,42 @@ func NewTextHandler(ctx context.Context, client *openai.Client, mod *model.Model
 		senderText = strings.TrimSpace(strings.TrimPrefix(msg.Text, botUsername))
 
 		// Handle prompts and replies
-		ccMsgs := []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: PromptJaric,
-			},
-		}
+		cs := gen.StartChat()
 		if isReply {
-			reply := msg.ReplyToMessage
-			// Append all replies of the latest `reply`
-			msgs, err := mod.GetReplies(ctx, reply.MessageId)
-			if err != nil {
-				return fmt.Errorf("failed to get linked messages: %v", err)
-			}
-			for _, m := range msgs {
-				role := openai.ChatMessageRoleUser
-				if m.SenderID == bot.Id {
-					role = openai.ChatMessageRoleAssistant
+			repliedMsg := msg.ReplyToMessage
+			if repliedMsg.From.Id == bot.Id {
+				cs.History = []*genai.Content{
+					{
+						Parts: []genai.Part{genai.Text(PromptJaric)},
+						Role:  "user",
+					},
+					{
+						Parts: []genai.Part{genai.Text(repliedMsg.Text)},
+						Role:  "model",
+					},
 				}
-				ccMsgs = append(ccMsgs, openai.ChatCompletionMessage{
-					Role:    role,
-					Content: m.Content,
-				})
+			} else {
+				senderText = PromptJaric + "\n\n" + senderText + "\n\n" + repliedMsg.Text
 			}
-			// Append the latest `reply`
-			role := openai.ChatMessageRoleUser
-			if reply.From.Id == bot.Id {
-				role = openai.ChatMessageRoleAssistant
-			}
-			ccMsgs = append(ccMsgs, openai.ChatCompletionMessage{
-				Role:    role,
-				Content: reply.Text,
-			})
+		} else {
+			senderText = PromptJaric + "\n\n" + senderText
 		}
-		ccMsgs = append(ccMsgs, openai.ChatCompletionMessage{
-			Role:    openai.ChatMessageRoleUser,
-			Content: senderText,
-		})
 
-		// Query OpenAI to get chat completion
-		res, err := client.CreateChatCompletion(ctx,
-			openai.ChatCompletionRequest{
-				Model:    openai.GPT3Dot5Turbo,
-				Messages: ccMsgs,
-			},
-		)
+		// Call the API
+		res, err := cs.SendMessage(ctx, genai.Text(senderText))
 		if err != nil {
-			return fmt.Errorf("failed to create chat completion: %v", err)
+			return fmt.Errorf("failed to call API: %v", err)
 		}
 
 		// Reply user with chat response
+		replyText, ok := (res.Candidates[0].Content.Parts[0]).(genai.Text)
+		if !ok {
+			return fmt.Errorf("failed to convert chat response to text")
+		}
 		reply, err := msg.Reply(bot,
-			formatTelegramMarkdown(res.Choices[0].Message.Content),
+			formatTelegramMarkdown(string(replyText)),
 			&gotgbot.SendMessageOpts{
 				ParseMode: ParseModeMarkdown,
-				ReplyMarkup: &gotgbot.ForceReply{
-					ForceReply: true,
-				},
 			},
 		)
 		if err != nil {

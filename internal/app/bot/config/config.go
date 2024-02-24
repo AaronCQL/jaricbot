@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	TelegramBotKey string `json:"telegram_bot_api_key"`
-	OpenAIKey      string `json:"openai_api_key"`
+	GeminiApiKey   string `json:"gemini_api_key"`
 	PebbleDir      string `json:"pebble_dir"`
 }
 
@@ -18,7 +18,7 @@ const (
 	dotenvFile = ".env"
 
 	KeyTelegramBotApiKey = "TELEGRAM_BOT_API_KEY"
-	keyOpenaiApiKey      = "OPENAI_API_KEY"
+	KeyGeminiApiKey      = "GEMINI_API_KEY"
 	KeyPebbleDir         = "PEBBLE_DIR"
 
 	DefaultPebbleDir = ".pebble"
@@ -33,9 +33,9 @@ func New() Config {
 		panic(KeyTelegramBotApiKey + " environment variable must be set")
 	}
 
-	openaiKey, ok := os.LookupEnv(keyOpenaiApiKey)
+	geminiApiKey, ok := os.LookupEnv(KeyGeminiApiKey)
 	if !ok {
-		panic(keyOpenaiApiKey + " environment variable must be set")
+		panic(KeyGeminiApiKey + " environment variable must be set")
 	}
 
 	pebbleDir, ok := os.LookupEnv(KeyPebbleDir)
@@ -45,7 +45,7 @@ func New() Config {
 
 	config := Config{
 		TelegramBotKey: telegramBotKey,
-		OpenAIKey:      openaiKey,
+		GeminiApiKey:   geminiApiKey,
 		PebbleDir:      pebbleDir,
 	}
 
