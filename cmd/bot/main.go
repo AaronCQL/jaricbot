@@ -13,7 +13,8 @@ import (
 	"github.com/AaronCQL/jaricbot/internal/app/bot/model"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
-	"github.com/sashabaranov/go-openai"
+	"github.com/google/generative-ai-go/genai"
+	"google.golang.org/api/option"
 )
 
 const (
@@ -31,7 +32,34 @@ func main() {
 	db := database.New(config.PebbleDir, storeMessages)
 	defer db.Close()
 	model := model.New(db)
-	client := openai.NewClient(config.OpenAIKey)
+	client, err := genai.NewClient(ctx, option.WithAPIKey(config.GeminiApiKey))
+	if err != nil {
+		panic(err)
+	}
+	defer client.Close()
+
+	gen := client.GenerativeModel("gemini-pro")
+	gen.SetCandidateCount(1)
+	gen.SetTemperature(0.88)
+	gen.SetTopP(0.3)
+	gen.SafetySettings = []*genai.SafetySetting{
+		{
+			Category:  genai.HarmCategoryDangerousContent,
+			Threshold: genai.HarmBlockNone,
+		},
+		{
+			Category:  genai.HarmCategoryHarassment,
+			Threshold: genai.HarmBlockNone,
+		},
+		{
+			Category:  genai.HarmCategoryHateSpeech,
+			Threshold: genai.HarmBlockNone,
+		},
+		{
+			Category:  genai.HarmCategorySexuallyExplicit,
+			Threshold: genai.HarmBlockNone,
+		},
+	}
 
 	updater := ext.NewUpdater(&ext.UpdaterOpts{
 		Dispatcher: ext.NewDispatcher(&ext.DispatcherOpts{
@@ -47,7 +75,7 @@ func main() {
 
 	// Add handlers here:
 	dispatcher.AddHandler(handler.NewCommandHandler(ctx))
-	dispatcher.AddHandler(handler.NewTextHandler(ctx, client, model))
+	dispatcher.AddHandler(handler.NewTextHandler(ctx, gen, model))
 
 	bot, err := gotgbot.NewBot(config.TelegramBotKey, nil)
 	if err != nil {

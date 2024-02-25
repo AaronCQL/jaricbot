@@ -1,10 +1,21 @@
 package handler
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
-// Formats the given text to be compatible with Telegram's 'Markdown' syntax.
-// See notes in: https://core.telegram.org/bots/api#markdown-style.
-func formatTelegramMarkdown(text string) string {
+var (
+	asteriskListRegex  = regexp.MustCompile(`(?m)^([ ]*)\*[ ]`)
+	escapedBoldRegex   = regexp.MustCompile(`(\\\*\\\*)`)
+	escapedItalicRegex = regexp.MustCompile(`(\\\_\\\_)`)
+)
+
+func formatList(text string) string {
+	return asteriskListRegex.ReplaceAllString(text, "$1- ")
+}
+
+func escapeSpecialCharacters(text string) string {
 	shouldEscape := true
 	sb := strings.Builder{}
 	for i, char := range text {
@@ -16,15 +27,36 @@ func formatTelegramMarkdown(text string) string {
 			continue
 		}
 
-		// Escape special characters outside of code blocks
 		if char == '`' {
 			shouldEscape = !shouldEscape
 		}
 		if shouldEscape &&
-			(char == '*' || char == '_' || char == '[' || char == ']') {
+			(char == '*' || char == '_') {
 			sb.WriteRune('\\')
 		}
 		sb.WriteRune(char)
 	}
 	return sb.String()
+}
+
+func formatBold(text string) string {
+	return escapedBoldRegex.ReplaceAllString(text, "*")
+}
+
+func formatItalic(text string) string {
+	return escapedItalicRegex.ReplaceAllString(text, "_")
+}
+
+// Formats the given text to be compatible with Telegram's 'Markdown' syntax.
+// See notes in: https://core.telegram.org/bots/api#markdown-style.
+func formatTelegramMarkdown(text string) string {
+	return strings.TrimSpace(
+		formatItalic(
+			formatBold(
+				escapeSpecialCharacters(
+					formatList(text),
+				),
+			),
+		),
+	)
 }
