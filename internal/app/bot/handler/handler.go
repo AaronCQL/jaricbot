@@ -67,30 +67,37 @@ func NewTextHandler(ctx context.Context, gen *genai.GenerativeModel, mod *model.
 		// Remove the bot's username from the message
 		senderText = strings.TrimSpace(strings.TrimPrefix(msg.Text, botUsername))
 
-		// Handle prompts and replies
-		cs := gen.StartChat()
+		// Get the full chat history
+		history := model.NewHistory()
+		history.Append(model.RoleUser, PromptJaric)
 		if isReply {
-			repliedMsg := msg.ReplyToMessage
-			if repliedMsg.From.Id == bot.Id {
-				cs.History = []*genai.Content{
-					{
-						Parts: []genai.Part{genai.Text(PromptJaric)},
-						Role:  "user",
-					},
-					{
-						Parts: []genai.Part{genai.Text(repliedMsg.Text)},
-						Role:  "model",
-					},
-				}
-			} else {
-				senderText = PromptJaric + "\n\n" + senderText + "\n\n" + repliedMsg.Text
+			reply := msg.ReplyToMessage
+			// Append all replies of the latest `reply`
+			msgs, err := mod.GetReplies(ctx, reply.MessageId)
+			if err != nil {
+				return fmt.Errorf("failed to get linked messages: %v", err)
 			}
-		} else {
-			senderText = PromptJaric + "\n\n" + senderText
+			for _, m := range msgs {
+				role := model.RoleUser
+				if m.SenderID == bot.Id {
+					role = model.RoleModel
+				}
+				history.Append(role, m.Content)
+			}
+			// Append the latest `reply`
+			role := model.RoleUser
+			if reply.From.Id == bot.Id {
+				role = model.RoleModel
+			}
+			history.Append(role, reply.Text)
 		}
+		history.Append(model.RoleUser, senderText)
 
 		// Call the API
-		res, err := cs.SendMessage(ctx, genai.Text(senderText))
+		senderPart, geminiHistory := history.ToGeminiContents()
+		cs := gen.StartChat()
+		cs.History = geminiHistory
+		res, err := cs.SendMessage(ctx, senderPart)
 		if err != nil {
 			return fmt.Errorf("failed to call API: %v", err)
 		}
