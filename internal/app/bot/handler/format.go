@@ -31,7 +31,7 @@ func escapeSpecialCharacters(text string) string {
 			shouldEscape = !shouldEscape
 		}
 		if shouldEscape &&
-			(char == '*' || char == '_' || char == '[' || char == ']') {
+			(char == '*' || char == '_') {
 			sb.WriteRune('\\')
 		}
 		sb.WriteRune(char)

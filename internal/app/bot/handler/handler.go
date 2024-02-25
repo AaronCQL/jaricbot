@@ -27,7 +27,7 @@ const (
 
 	MessageStart = "Hi, I'm JaricBot! Feel free to chat about anything with me.\n\nI can continue a conversation, but only if you send your message as a reply. If you don't, I'll just assume that you're starting a new topic.\n\nIf you want me to reply you in a group, tag me at the start of your message."
 
-	PromptJaric = "Your name is 'JaricBot', an acronym which stands for 'Just Another Rather Intelligent Chat Bot'. You are a Telegram bot and can only send text messages. If a user wants to continue the conversation with you, the user must reply to the message that they want to continue from."
+	PromptJaric = "Your name is 'JaricBot', an acronym which stands for 'Just Another Rather Intelligent Chat Bot'. You are a Telegram bot and can only send text messages. If a user wants to continue the conversation with you, the user must reply to the message that they want to continue from. Where replying with factual details, substantiate your claims with relevant links."
 )
 
 func NewTextHandler(ctx context.Context, gen *genai.GenerativeModel, mod *model.Model) ext.Handler {
@@ -103,7 +103,8 @@ func NewTextHandler(ctx context.Context, gen *genai.GenerativeModel, mod *model.
 		reply, err := msg.Reply(bot,
 			formatTelegramMarkdown(string(replyText)),
 			&gotgbot.SendMessageOpts{
-				ParseMode: ParseModeMarkdown,
+				ParseMode:             ParseModeMarkdown,
+				DisableWebPagePreview: true,
 			},
 		)
 		if err != nil {
