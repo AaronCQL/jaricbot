@@ -2,6 +2,8 @@
 
 **J**ust **A**nother **R**ather **I**ntelligent **C**hat **Bot** - Telegram chat bot powered by Gemini.
 
+Message [@JaricBot](https://t.me/JaricBot) to try it out!
+
 ## Setup
 
 1. Install Go 1.21 or higher
