@@ -40,8 +40,6 @@ func main() {
 
 	gen := client.GenerativeModel("gemini-pro")
 	gen.SetCandidateCount(1)
-	gen.SetTemperature(0.88)
-	gen.SetTopP(0.3)
 	gen.SafetySettings = []*genai.SafetySetting{
 		{
 			Category:  genai.HarmCategoryDangerousContent,
