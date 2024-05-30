@@ -18,6 +18,8 @@ import (
 )
 
 const (
+	modelName string = "gemini-1.5-flash"
+
 	storeMessages string = "messages"
 	storeUsers    string = "users"
 
@@ -38,7 +40,7 @@ func main() {
 	}
 	defer client.Close()
 
-	gen := client.GenerativeModel("gemini-pro")
+	gen := client.GenerativeModel(modelName)
 	gen.SetCandidateCount(1)
 	gen.SafetySettings = []*genai.SafetySetting{
 		{
@@ -75,7 +77,11 @@ func main() {
 	dispatcher.AddHandler(handler.NewCommandHandler(ctx))
 	dispatcher.AddHandler(handler.NewTextHandler(ctx, gen, model))
 
-	bot, err := gotgbot.NewBot(config.TelegramBotKey, nil)
+	bot, err := gotgbot.NewBot(config.TelegramBotKey, &gotgbot.BotOpts{
+		RequestOpts: &gotgbot.RequestOpts{
+			Timeout: 16 * time.Second,
+		},
+	})
 	if err != nil {
 		log.Printf("failed to initialise telegram bot\n")
 		panic(err)
