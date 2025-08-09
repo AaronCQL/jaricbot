@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	modelName string = "gemini-2.0-flash"
+	modelName string = "gemini-2.5-flash-lite"
 
 	storeMessages string = "messages"
 	storeUsers    string = "users"
